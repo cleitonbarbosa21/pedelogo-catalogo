@@ -44,6 +44,7 @@ pipeline {
                 sh 'cat ./k8s/api.yaml'
                 withKubeConfig([credentialsId: env.KUBECONFIG_CREDENTIAL_ID]) {
                     sh 'kubectl apply -f k8s/deployment.yaml'
+                }
             }
         }
     }

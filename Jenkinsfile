@@ -12,8 +12,10 @@ pipeline {
         stage('Docker Build Image') {
             steps {
                 script {
-                    dockerapp = docker.build("cleitonbarbosa21/api-produto:${env.BUILD_ID}",
-                      '-f ./src/PedeLogo.Catalogo.Api/Dockerfile .')
+                    dockerapp = docker.build(
+                        "cleitonbarbosa21/api-produto:${env.BUILD_ID}",
+                        '-f ./src/PedeLogo.Catalogo.Api/Dockerfile .'
+                    )
                 }
             }
         }
@@ -21,7 +23,7 @@ pipeline {
         stage('Docker Push Image') {
             steps {
                 script {
-                        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
                         dockerapp.push('latest')
                         dockerapp.push("${env.BUILD_ID}")
                     }
@@ -33,17 +35,29 @@ pipeline {
             agent {
                 kubernetes {
                     cloud 'kubernetes'
+                    yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command:
+    - cat
+    tty: true
+"""
                 }
             }
             environment {
                 tag_version = "${env.BUILD_ID}"
             }
-
             steps {
-                sh 'sed -i "s/{{tag}}/$tag_version/g" ./k8s/api.yaml'
-                sh 'cat ./k8s/api.yaml'
-                withKubeConfig([credentialsId: env.KUBECONFIG_CREDENTIAL_ID]) {
-                    sh 'kubectl apply -f k8s/deployment.yaml'
+                container('kubectl') {
+                    sh 'sed -i "s/{{tag}}/$tag_version/g" ./k8s/api.yaml'
+                    sh 'cat ./k8s/api.yaml'
+                    withKubeConfig([credentialsId: env.KUBECONFIG_CREDENTIAL_ID]) {
+                        sh 'kubectl apply -f k8s/deployment.yaml'
+                    }
                 }
             }
         }

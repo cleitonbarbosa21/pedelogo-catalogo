@@ -5,14 +5,14 @@ pipeline {
 
         stage('Get Source') {
             steps {
-                git url: 'https://github.com/fabricioveronez/pedelogo-catalogo.git', branch: 'main'
+                git url: 'https://github.com/cleitonbarbosa21/pedelogo-catalogo.git', branch: 'main'
             }
         }
 
         stage('Docker Build Image') {
             steps {
                 script {
-                    dockerapp = docker.build("fabricioveronez/api-produto:${env.BUILD_ID}",
+                    dockerapp = docker.build("cleitonbarbosa21/api-produto:${env.BUILD_ID}",
                       '-f ./src/PedeLogo.Catalogo.Api/Dockerfile .')
                 }
             }
@@ -42,7 +42,7 @@ pipeline {
             steps {
                 sh 'sed -i "s/{{tag}}/$tag_version/g" ./k8s/api.yaml'
                 sh 'cat ./k8s/api.yaml'
-                kubernetesDeploy(configs: '**/k8s/**', kubeconfigId: 'kubeconfig')
+                kubernetesDeploy(configs: '**/k8s/**', kubeconfigId: 'config')
             }
         }
     }
